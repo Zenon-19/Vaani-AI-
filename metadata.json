@@ -1,0 +1,6 @@
+{
+  "name": "Vaani AI",
+  "description": "A voice-first Hinglish conversation analyst and communication coach. Understand the conversation. See both sides. Respond better.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
