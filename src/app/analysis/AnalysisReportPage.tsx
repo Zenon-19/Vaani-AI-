@@ -72,7 +72,20 @@ export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
     setIsEvidenceDrawerOpen(true);
   };
 
-  const handleDownloadExport = (format: "json" | "md") => {
+  const handleDownloadExport = async (format: "json" | "md" | "pdf") => {
+    if (format === "pdf") {
+      try {
+        const { exportReportToPdf } = await import("../../lib/pdfExport");
+        await exportReportToPdf(report);
+        toast("PDF Export Ready", "Downloaded analysis report as PDF document.", "success");
+        setIsExportDialogOpen(false);
+      } catch (err) {
+        console.error("PDF generation failed:", err);
+        toast("Export Failed", "Could not generate PDF document. Please try Markdown or JSON.", "error");
+      }
+      return;
+    }
+
     const content =
       format === "json"
         ? JSON.stringify(report, null, 2)
@@ -124,12 +137,22 @@ export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
             </Button>
 
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDownloadExport("pdf")}
+              leftIcon={<Download className="w-3.5 h-3.5 text-[#C9FF32]" />}
+              className="border-[#C9FF32]/40 hover:border-[#C9FF32] text-[#F1F0E9]"
+            >
+              Export PDF
+            </Button>
+
+            <Button
               variant="secondary"
               size="sm"
               onClick={() => setIsExportDialogOpen(true)}
               leftIcon={<Download className="w-3.5 h-3.5" />}
             >
-              Export
+              Export All
             </Button>
 
             <Button
@@ -306,12 +329,16 @@ export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
         <div className="space-y-3 pt-2">
           <Card
             hoverEffect
-            onClick={() => handleDownloadExport("json")}
+            activeBorder="lime"
+            onClick={() => handleDownloadExport("pdf")}
             className="p-4 flex items-center justify-between"
           >
             <div>
-              <p className="text-sm font-semibold text-[#F1F0E9]">JSON Schema</p>
-              <p className="text-xs text-[#A4A69F]">Raw data with timestamps and claim IDs</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-[#F1F0E9]">PDF Document</p>
+                <span className="text-[10px] font-semibold text-[#090A09] bg-[#C9FF32] px-1.5 py-0.5 rounded">Recommended</span>
+              </div>
+              <p className="text-xs text-[#A4A69F] mt-0.5">High-fidelity report formatted for sharing and printing</p>
             </div>
             <Download className="w-4 h-4 text-[#C9FF32]" />
           </Card>
@@ -326,6 +353,18 @@ export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
               <p className="text-xs text-[#A4A69F]">Formatted markdown for Notion, GitHub, or docs</p>
             </div>
             <Download className="w-4 h-4 text-[#C8A6FF]" />
+          </Card>
+
+          <Card
+            hoverEffect
+            onClick={() => handleDownloadExport("json")}
+            className="p-4 flex items-center justify-between"
+          >
+            <div>
+              <p className="text-sm font-semibold text-[#F1F0E9]">JSON Schema</p>
+              <p className="text-xs text-[#A4A69F]">Raw structured data with timestamps and claim IDs</p>
+            </div>
+            <Download className="w-4 h-4 text-[#A4A69F]" />
           </Card>
         </div>
       </Dialog>

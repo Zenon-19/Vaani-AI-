@@ -89,7 +89,20 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
     }
   };
 
-  const handleDownloadExport = (report: AnalysisReport, format: "json" | "md") => {
+  const handleDownloadExport = async (report: AnalysisReport, format: "json" | "md" | "pdf") => {
+    if (format === "pdf") {
+      try {
+        const { exportReportToPdf } = await import("../../lib/pdfExport");
+        await exportReportToPdf(report);
+        toast("Export Ready", "Downloaded analysis report as PDF.", "success");
+        setExportModalReport(null);
+      } catch (err) {
+        console.error("PDF export failed:", err);
+        toast("Export Failed", "Could not generate PDF document.", "error");
+      }
+      return;
+    }
+
     const content =
       format === "json"
         ? JSON.stringify(report, null, 2)
@@ -346,6 +359,22 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
           <div className="space-y-3 pt-2">
             <Card
               hoverEffect
+              activeBorder="lime"
+              onClick={() => handleDownloadExport(exportModalReport, "pdf")}
+              className="p-4 flex items-center justify-between"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-[#F1F0E9]">PDF Document</p>
+                  <span className="text-[10px] font-semibold text-[#090A09] bg-[#C9FF32] px-1.5 py-0.5 rounded">Recommended</span>
+                </div>
+                <p className="text-xs text-[#A4A69F] mt-0.5">Formatted printable report for documentation and sharing</p>
+              </div>
+              <Download className="w-4 h-4 text-[#C9FF32]" />
+            </Card>
+
+            <Card
+              hoverEffect
               onClick={() => handleDownloadExport(exportModalReport, "json")}
               className="p-4 flex items-center justify-between"
             >
@@ -353,7 +382,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
                 <p className="text-sm font-semibold text-[#F1F0E9]">JSON Schema</p>
                 <p className="text-xs text-[#A4A69F]">Complete data format</p>
               </div>
-              <Download className="w-4 h-4 text-[#C9FF32]" />
+              <Download className="w-4 h-4 text-[#A4A69F]" />
             </Card>
 
             <Card

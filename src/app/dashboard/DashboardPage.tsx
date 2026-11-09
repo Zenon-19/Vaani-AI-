@@ -79,7 +79,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     }
   };
 
-  const handleDownloadExport = (report: AnalysisReport, format: "json" | "md") => {
+  const handleDownloadExport = async (report: AnalysisReport, format: "json" | "md" | "pdf") => {
+    if (format === "pdf") {
+      try {
+        const { exportReportToPdf } = await import("../../lib/pdfExport");
+        await exportReportToPdf(report);
+        toast("Export Ready", "Downloaded analysis report as PDF.", "success");
+        setExportModalReport(null);
+      } catch (err) {
+        console.error("PDF export failed:", err);
+        toast("Export Failed", "Could not generate PDF document.", "error");
+      }
+      return;
+    }
+
     let content = "";
     let filename = `${report.title.toLowerCase().replace(/[^a-z0-9]/g, "-")}.${format}`;
     let type = "text/plain";
@@ -431,6 +444,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="space-y-3 pt-2">
             <Card
               hoverEffect
+              activeBorder="lime"
+              onClick={() => handleDownloadExport(exportModalReport, "pdf")}
+              className="p-4 flex items-center justify-between"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-[#F1F0E9]">PDF Document</p>
+                  <span className="text-[10px] font-semibold text-[#090A09] bg-[#C9FF32] px-1.5 py-0.5 rounded">Recommended</span>
+                </div>
+                <p className="text-xs text-[#A4A69F] mt-0.5">High-fidelity report formatted for sharing and printing</p>
+              </div>
+              <Download className="w-4 h-4 text-[#C9FF32]" />
+            </Card>
+
+            <Card
+              hoverEffect
               onClick={() => handleDownloadExport(exportModalReport, "json")}
               className="p-4 flex items-center justify-between"
             >
@@ -438,7 +467,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <p className="text-sm font-semibold text-[#F1F0E9]">Structured JSON</p>
                 <p className="text-xs text-[#A4A69F]">Full schema with claims, timestamps & replies</p>
               </div>
-              <Download className="w-4 h-4 text-[#C9FF32]" />
+              <Download className="w-4 h-4 text-[#A4A69F]" />
             </Card>
 
             <Card
