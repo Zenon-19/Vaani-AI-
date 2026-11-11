@@ -8,42 +8,81 @@ import { VerdictCard } from "../../components/analysis/VerdictCard";
 import { ClaimEvidenceList } from "../../components/analysis/ClaimEvidenceList";
 import { EvidenceDrawer } from "../../components/analysis/EvidenceDrawer";
 import { CommunicationInsightCard } from "../../components/analysis/CommunicationInsightCard";
+import { SentimentTimeline } from "../../components/analysis/SentimentTimeline";
+import { HinglishExecutiveSummaryCard } from "../../components/analysis/HinglishExecutiveSummaryCard";
 import { CopyButton } from "../../components/response/CopyButton";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Dialog } from "../../components/ui/Dialog";
 import { ConfirmDeleteDialog } from "../../components/ui/ConfirmDeleteDialog";
 import { useToast } from "../../components/ui/Toast";
-import { AnalysisReport, ClaimAssessment } from "../../types";
+import {
+  AnalysisReport,
+  ClaimAssessment,
+  HinglishExecutiveSummary,
+} from "../../types";
 import { formatDate, formatTime } from "../../lib/utils";
+import {
+  generateHinglishExecutiveSummary,
+  formatHinglishSummaryForCopy,
+} from "../../lib/hinglishSummary";
 import {
   FileText,
   Download,
   Trash2,
-  Share2,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
-  AlertCircle,
-  MessageSquare,
+  Languages,
 } from "lucide-react";
 
 interface AnalysisReportPageProps {
   report: AnalysisReport;
   onNavigate: (path: string) => void;
+  onUpdateReport?: (updated: AnalysisReport) => void;
   onDeleteReport: (id: string) => void;
 }
 
 export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
   report,
   onNavigate,
+  onUpdateReport,
   onDeleteReport,
 }) => {
   const [selectedClaim, setSelectedClaim] = useState<ClaimAssessment | null>(null);
   const [isEvidenceDrawerOpen, setIsEvidenceDrawerOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [localHinglishSummary, setLocalHinglishSummary] = useState<
+    HinglishExecutiveSummary | undefined
+  >(report.hinglishSummary);
+  const [isGeneratingHinglish, setIsGeneratingHinglish] = useState(false);
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    setLocalHinglishSummary(report.hinglishSummary);
+  }, [report.id, report.hinglishSummary]);
+
+  const activeHinglishSummary = report.hinglishSummary || localHinglishSummary;
+
+  const handleGenerateHinglishSummary = (
+    focus: "balanced" | "misunderstandings" = "balanced"
+  ) => {
+    setIsGeneratingHinglish(true);
+    setTimeout(() => {
+      const generated = generateHinglishExecutiveSummary(report, focus);
+      setLocalHinglishSummary(generated);
+      onUpdateReport?.({
+        ...report,
+        hinglishSummary: generated,
+      });
+      setIsGeneratingHinglish(false);
+      toast(
+        "Hinglish Brief Ready",
+        "Generated concise executive summary with key points and misunderstandings.",
+        "success"
+      );
+    }, 450);
+  };
 
   const handleOpenEvidenceForClaim = (claim: ClaimAssessment) => {
     setSelectedClaim(claim);
@@ -76,7 +115,11 @@ export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
     if (format === "pdf") {
       try {
         const { exportReportToPdf } = await import("../../lib/pdfExport");
-        await exportReportToPdf(report);
+        await exportReportToPdf(
+          activeHinglishSummary
+            ? { ...report, hinglishSummary: activeHinglishSummary }
+            : report
+        );
         toast("PDF Export Ready", "Downloaded analysis report as PDF document.", "success");
         setIsExportDialogOpen(false);
       } catch (err) {
@@ -86,10 +129,20 @@ export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
       return;
     }
 
+    const hinglishMdSection = activeHinglishSummary
+      ? `\n\n## Hinglish Executive Summary\n${formatHinglishSummaryForCopy(activeHinglishSummary, report.title)}`
+      : "";
+
     const content =
       format === "json"
-        ? JSON.stringify(report, null, 2)
-        : `# Vaani AI Conversation Analysis Report\n**Title**: ${report.title}\n**Date**: ${report.createdAt}\n**Status**: ${report.status}\n\n## Neutral Summary\n${report.summary}\n\n## Core Disagreement\n${report.mainDisagreement}\n\n## Key Unresolved Question\n${report.keyUnresolvedQuestion}\n\n## Verdicts\n${report.verdicts.map(v => `### ${v.issue}\n- Stronger Side: ${v.strongerArgumentSide}\n- Shared Responsibility: ${v.sharedResponsibility}`).join("\n\n")}`;
+        ? JSON.stringify(
+            activeHinglishSummary
+              ? { ...report, hinglishSummary: activeHinglishSummary }
+              : report,
+            null,
+            2
+          )
+        : `# Vaani AI Conversation Analysis Report\n**Title**: ${report.title}\n**Date**: ${report.createdAt}\n**Status**: ${report.status}\n\n## Neutral Summary\n${report.summary}\n\n## Core Disagreement\n${report.mainDisagreement}\n\n## Key Unresolved Question\n${report.keyUnresolvedQuestion}${hinglishMdSection}\n\n## Verdicts\n${report.verdicts.map(v => `### ${v.issue}\n- Stronger Side: ${v.strongerArgumentSide}\n- Shared Responsibility: ${v.sharedResponsibility}`).join("\n\n")}`;
 
     const blob = new Blob([content], {
       type: format === "json" ? "application/json" : "text/plain",
@@ -126,7 +179,22 @@ export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
           />
 
           {/* Action Bar */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="lavender"
+              size="sm"
+              onClick={() => {
+                const el = document.getElementById("hinglish-executive-summary");
+                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                if (!activeHinglishSummary && !isGeneratingHinglish) {
+                  handleGenerateHinglishSummary("balanced");
+                }
+              }}
+              leftIcon={<Languages className="w-3.5 h-3.5" />}
+            >
+              {activeHinglishSummary ? "Hinglish Brief" : "Hinglish Summary"}
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -230,7 +298,26 @@ export const AnalysisReportPage: React.FC<AnalysisReportPageProps> = ({
           contextLimitations={report.contextLimitations}
         />
 
-        {/* 2. Speaker Cards (Grid) */}
+        {/* 1b. Concise Hinglish Executive Summary */}
+        <div id="hinglish-executive-summary">
+          <HinglishExecutiveSummaryCard
+            report={report}
+            hinglishSummary={activeHinglishSummary}
+            isGenerating={isGeneratingHinglish}
+            onGenerate={handleGenerateHinglishSummary}
+            onInspectSegment={handleOpenEvidenceForSegment}
+          />
+        </div>
+
+        {/* 2. D3 Sentiment & Tone Shift Timeline */}
+        <SentimentTimeline
+          timeline={report.sentimentTimeline}
+          transcript={report.transcript}
+          isSampleData={report.isSampleData}
+          onInspectSegment={handleOpenEvidenceForSegment}
+        />
+
+        {/* 3. Speaker Cards (Grid) */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>

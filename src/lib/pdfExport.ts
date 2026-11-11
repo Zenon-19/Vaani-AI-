@@ -210,6 +210,53 @@ export async function exportReportToPdf(report: AnalysisReport): Promise<void> {
     y += 4;
   }
 
+  // Optional Hinglish Executive Summary
+  if (report.hinglishSummary) {
+    checkPageBreak(40);
+    y += 2;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(110, 70, 180);
+    doc.text("Hinglish Executive Brief (Key Points & Misunderstandings)", margin, y);
+    y += 5.5;
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(40, 42, 40);
+    const hOverviewLines = doc.splitTextToSize(report.hinglishSummary.overview, contentWidth);
+    doc.text(hOverviewLines, margin, y);
+    y += hOverviewLines.length * 4.2 + 3;
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 32, 30);
+    doc.text("Mukhya Points:", margin, y);
+    y += 4;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 62, 60);
+    report.hinglishSummary.keyPoints.forEach((kp) => {
+      const kpLines = doc.splitTextToSize(`• ${kp.speakerName}: ${kp.point}`, contentWidth - 4);
+      checkPageBreak(kpLines.length * 4 + 2);
+      doc.text(kpLines, margin + 2, y);
+      y += kpLines.length * 3.8 + 1;
+    });
+    y += 2;
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(180, 50, 90);
+    doc.text("Potential Misunderstandings:", margin, y);
+    y += 4;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 62, 60);
+    report.hinglishSummary.potentialMisunderstandings.forEach((m) => {
+      const mLines = doc.splitTextToSize(`• ${m.title}: ${m.explanation} (Tip: ${m.clarificationTip})`, contentWidth - 4);
+      checkPageBreak(mLines.length * 4 + 2);
+      doc.text(mLines, margin + 2, y);
+      y += mLines.length * 3.8 + 1.5;
+    });
+    y += 3;
+  }
+
   // Section 2: Speaker Perspectives & Assessments
   checkPageBreak(40);
   y += 2;

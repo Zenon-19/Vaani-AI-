@@ -167,6 +167,7 @@ export default function App() {
             <AnalysisReportPage
               report={getAnalysisReportById(reportMatch[1])}
               onNavigate={navigate}
+              onUpdateReport={handleUpdateReport}
               onDeleteReport={handleDeleteReport}
             />
           )}

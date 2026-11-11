@@ -84,6 +84,50 @@ export interface SuggestedReply {
   notes?: string;
 }
 
+export type EmotionalToneLabel =
+  | "Constructive"
+  | "Collaborative"
+  | "Analytical"
+  | "Urgent"
+  | "Tense"
+  | "Defensive";
+
+export interface SentimentTimelinePoint {
+  id: string;
+  segmentId: string;
+  timestampSeconds: number;
+  speakerId: string;
+  speakerName: string;
+  /** Emotional valence score from -1.0 (Tense/Defensive) to +1.0 (Constructive/Collaborative) */
+  score: number;
+  toneLabel: EmotionalToneLabel;
+  excerpt: string;
+  triggerNote?: string;
+}
+
+export interface HinglishKeyPoint {
+  speakerName: string;
+  point: string;
+  segmentId?: string;
+}
+
+export interface HinglishMisunderstanding {
+  title: string;
+  explanation: string;
+  clarificationTip: string;
+  segmentId?: string;
+}
+
+export interface HinglishExecutiveSummary {
+  focus: "balanced" | "misunderstandings";
+  overview: string;
+  keyPoints: HinglishKeyPoint[];
+  potentialMisunderstandings: HinglishMisunderstanding[];
+  bottomLine: string;
+  generatedAt: string;
+  isSampleSynthesis: boolean;
+}
+
 export interface AnalysisReport {
   id: string;
   title: string;
@@ -102,6 +146,7 @@ export interface AnalysisReport {
   mainDisagreement: string;
   keyUnresolvedQuestion: string;
   contextLimitations: string[];
+  hinglishSummary?: HinglishExecutiveSummary;
 
   // Speaker breakdowns
   speakerAssessments: SpeakerAssessment[];
@@ -114,6 +159,9 @@ export interface AnalysisReport {
 
   // Nuances & pitfalls
   insights: CommunicationInsight[];
+
+  // Optional sentiment trajectory across conversation duration
+  sentimentTimeline?: SentimentTimelinePoint[];
 
   // Response options
   suggestedReplies: SuggestedReply[];

@@ -158,6 +158,118 @@ export const SAMPLE_REPORTS: AnalysisReport[] = [
         recommendation: "Conclude critical blockers with concrete status categories (e.g., Investigating, Blocked, Resolving by 3 PM) rather than open-ended phrases."
       }
     ],
+    sentimentTimeline: [
+      {
+        id: "sent-01",
+        segmentId: "seg-01",
+        timestampSeconds: 0,
+        speakerId: "spk-2",
+        speakerName: "Priya (Product Manager)",
+        score: 0.15,
+        toneLabel: "Analytical",
+        excerpt: "Rohan, hum Thursday release ke bare mein baat kar sakte hain? Mujhe QA lead ne bola ki staging cluster crash ho gaya hai...",
+        triggerNote: "Neutral opening framing staging blocker status."
+      },
+      {
+        id: "sent-02",
+        segmentId: "seg-02",
+        timestampSeconds: 19,
+        speakerId: "spk-2",
+        speakerName: "Priya (Product Manager)",
+        score: -0.32,
+        toneLabel: "Urgent",
+        excerpt: "Agar hum kal midnight tak export feature deploy nahi karte, toh contract mein $25,000 ki SLA penalty clause activate ho jayegi.",
+        triggerNote: "Introduced $25,000 contractual SLA penalty pressure."
+      },
+      {
+        id: "sent-03",
+        segmentId: "seg-03",
+        timestampSeconds: 43,
+        speakerId: "spk-1",
+        speakerName: "Rohan (Eng Lead)",
+        score: -0.58,
+        toneLabel: "Defensive",
+        excerpt: "Product team hamesha last moment mein sab change kar deta hai without checking technical feasibility.",
+        triggerNote: "Escalation: generalized blame ('hamesha last moment mein')."
+      },
+      {
+        id: "sent-04",
+        segmentId: "seg-04",
+        timestampSeconds: 79,
+        speakerId: "spk-1",
+        speakerName: "Rohan (Eng Lead)",
+        score: -0.24,
+        toneLabel: "Defensive",
+        excerpt: "Maine Tuesday ke standup mein explicitly bola tha ki DB migration chal rahi hai, thoda delay ho sakta hai.",
+        triggerNote: "Defending prior standup communication."
+      },
+      {
+        id: "sent-05",
+        segmentId: "seg-05",
+        timestampSeconds: 113,
+        speakerId: "spk-1",
+        speakerName: "Rohan (Eng Lead)",
+        score: 0.18,
+        toneLabel: "Analytical",
+        excerpt: "Jab PR #412 merge hui toh background worker memory consumption 300MB se 1.8GB jump ho gayi thi. Redis OOM error 137...",
+        triggerNote: "Shifted to factual log evidence (OOM 137 metrics)."
+      },
+      {
+        id: "sent-06",
+        segmentId: "seg-06",
+        timestampSeconds: 157,
+        speakerId: "spk-2",
+        speakerName: "Priya (Product Manager)",
+        score: -0.38,
+        toneLabel: "Tense",
+        excerpt: "Lekin Rohan, yeh CSV streaming filter koi achanak aaya hua scope nahi tha! PRD ke appendix section 4.2 mein August se documented tha.",
+        triggerNote: "Counter-push on PRD documentation timeline."
+      },
+      {
+        id: "sent-07",
+        segmentId: "seg-07",
+        timestampSeconds: 195,
+        speakerId: "spk-1",
+        speakerName: "Rohan (Eng Lead)",
+        score: -0.15,
+        toneLabel: "Analytical",
+        excerpt: "Yeh appendix mein tha, lekin sprint planning mein humne iska koi estimation ya spike nahi rakha tha.",
+        triggerNote: "Clarified distinction between PRD appendix and sprint backlog."
+      },
+      {
+        id: "sent-08",
+        segmentId: "seg-08",
+        timestampSeconds: 231,
+        speakerId: "spk-2",
+        speakerName: "Priya (Product Manager)",
+        score: -0.64,
+        toneLabel: "Tense",
+        excerpt: "Honestly, mere hisaab se yeh do ghante ka kaam tha, bas memory limit badha dete worker container ki.",
+        triggerNote: "Peak friction: cross-domain effort minimization ('do ghante ka kaam')."
+      },
+      {
+        id: "sent-09",
+        segmentId: "seg-09",
+        timestampSeconds: 266,
+        speakerId: "spk-1",
+        speakerName: "Rohan (Eng Lead)",
+        score: -0.72,
+        toneLabel: "Defensive",
+        excerpt: "Memory badhana solution nahi hai Priya, agar prod mein 10 clients ne trigger kiya toh pura worker pool down ho jayega. That is reckless engineering.",
+        triggerNote: "Peak tension: strong pushback against production risk."
+      },
+      {
+        id: "sent-10",
+        segmentId: "seg-10",
+        timestampSeconds: 311,
+        speakerId: "spk-2",
+        speakerName: "Priya (Product Manager)",
+        score: 0.56,
+        toneLabel: "Collaborative",
+        excerpt: "I understand the technical risk. Let's figure out: what is the minimum stable version we can deploy by tomorrow evening?",
+        triggerNote: "De-escalation pivot: acknowledged risk and invited joint problem-solving."
+      }
+    ],
     suggestedReplies: [
       {
         id: "rep-calm",
@@ -399,6 +511,52 @@ export const SAMPLE_REPORTS: AnalysisReport[] = [
         title: "Fear of Running Out of Money vs Fear of Missing the Growth Window",
         description: "Aman is driven by the existential fear of losing momentum in the market, while Kabir is motivated by the existential risk of zero cash in bank.",
         recommendation: "Separate the discussion into two distinct decisions: the survival threshold (minimum 6 months runway) and the experimental budget."
+      }
+    ],
+    sentimentTimeline: [
+      {
+        id: "sent-b1",
+        segmentId: "seg-b1",
+        timestampSeconds: 0,
+        speakerId: "spk-1",
+        speakerName: "Aman (CEO)",
+        score: -0.35,
+        toneLabel: "Urgent",
+        excerpt: "Agar humne abhi ad spend double nahi kiya toh November tak hum 100k MRR touch nahi kar payenge...",
+        triggerNote: "Urgency around investor ARR milestone."
+      },
+      {
+        id: "sent-b2",
+        segmentId: "seg-b2",
+        timestampSeconds: 31,
+        speakerId: "spk-2",
+        speakerName: "Kabir (CTO)",
+        score: 0.08,
+        toneLabel: "Analytical",
+        excerpt: "Point samajh raha hoon. Lekin hamara 30-day churn abhi 14% chal raha hai. Leaky bucket mein paani dalenge toh runway 4 months pe aa jayegi.",
+        triggerNote: "Acknowledged intent before introducing unit-economics risk."
+      },
+      {
+        id: "sent-b3",
+        segmentId: "seg-b3",
+        timestampSeconds: 66,
+        speakerId: "spk-1",
+        speakerName: "Aman (CEO)",
+        score: -0.45,
+        toneLabel: "Tense",
+        excerpt: "Lekin wait karenge toh competitor saara market share le lega. We have to take calculated risks.",
+        triggerNote: "Competitive pressure framing."
+      },
+      {
+        id: "sent-b4",
+        segmentId: "seg-b4",
+        timestampSeconds: 96,
+        speakerId: "spk-2",
+        speakerName: "Kabir (CTO)",
+        score: 0.42,
+        toneLabel: "Constructive",
+        excerpt: "Calculated risk matlab measured experiments, blind burning nahi. Let's fix the user onboarding drops first.",
+        triggerNote: "Constructive framing: proposed gated experimentation."
       }
     ],
     suggestedReplies: [
