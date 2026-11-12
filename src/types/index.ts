@@ -105,6 +105,35 @@ export interface SentimentTimelinePoint {
   triggerNote?: string;
 }
 
+export interface VoiceIntensityPoint {
+  timeSeconds: number;
+  pitchHz: number; // Fundamental frequency F0 (e.g. 100Hz - 360Hz)
+  pitchDeltaPercent: number; // Relative shift from speaker baseline
+  amplitude: number; // 0.0 to 1.0 relative acoustic loudness
+  intensityScore: number; // 0.0 (calm baseline) to 1.0 (peak emotional tension/arousal)
+  speakerId: string;
+  speakerName: string;
+  segmentId?: string;
+  isSpike: boolean;
+  spikeReason?: string;
+  excerptSnippet?: string;
+}
+
+export interface EmotionalIntensityHotspot {
+  id: string;
+  timeSeconds: number;
+  speakerName: string;
+  speakerId: string;
+  type: "pitch_spike" | "volume_surge" | "cadence_rush" | "interruption" | "deescalation_drop";
+  intensityLevel: "moderate" | "high" | "peak";
+  pitchHz: number;
+  pitchShiftPercent: number;
+  title: string;
+  description: string;
+  transcriptExcerpt: string;
+  segmentId?: string;
+}
+
 export interface HinglishKeyPoint {
   speakerName: string;
   point: string;

@@ -26,6 +26,9 @@ import {
   Trash2,
   Download,
   Sparkles,
+  Calendar,
+  Filter,
+  X,
 } from "lucide-react";
 
 interface DashboardPageProps {
@@ -44,6 +47,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   isLoading = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [dateSort, setDateSort] = useState<"newest" | "oldest">("newest");
+  const [sentimentFilter, setSentimentFilter] = useState<
+    "all" | "collaborative" | "constructive" | "tense" | "defensive"
+  >("all");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
@@ -51,11 +58,43 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [exportModalReport, setExportModalReport] = useState<AnalysisReport | null>(null);
   const { toast } = useToast();
 
-  const filteredReports = reports.filter(
-    (r) =>
-      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.summary.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Helper to determine primary/dominant sentiment for a report
+  const getReportSentiment = (report: AnalysisReport): "collaborative" | "constructive" | "tense" | "defensive" | "analytical" => {
+    if (report.sentimentTimeline && report.sentimentTimeline.length > 0) {
+      const avgScore =
+        report.sentimentTimeline.reduce((acc, curr) => acc + curr.score, 0) /
+        report.sentimentTimeline.length;
+      if (avgScore >= 0.25) return "collaborative";
+      if (avgScore >= 0.05) return "constructive";
+      if (avgScore <= -0.35) return "defensive";
+      if (avgScore < 0.05) return "tense";
+    }
+    // Fallback based on summary text cues
+    const text = (report.summary + " " + report.mainDisagreement).toLowerCase();
+    if (text.includes("defens") || text.includes("reckless")) return "defensive";
+    if (text.includes("conflict") || text.includes("penalty") || text.includes("blocker")) return "tense";
+    if (text.includes("collaborat") || text.includes("align")) return "collaborative";
+    return "constructive";
+  };
+
+  const filteredReports = reports
+    .filter((r) => {
+      const matchesSearch =
+        r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.contextSummary && r.contextSummary.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      const repSentiment = getReportSentiment(r);
+      const matchesSentiment =
+        sentimentFilter === "all" || repSentiment === sentimentFilter;
+
+      return matchesSearch && matchesSentiment;
+    })
+    .sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
+      return dateSort === "newest" ? timeB - timeA : timeA - timeB;
+    });
 
   const handleStartRename = (report: AnalysisReport) => {
     setRenameTarget({ id: report.id, title: report.title });
@@ -240,7 +279,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         {/* Recent Reports Section */}
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div>
               <h3 className="text-lg font-bold text-[#F1F0E9] tracking-tight">
                 Recent Conversation Reports
@@ -250,15 +289,82 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </p>
             </div>
 
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-[#A4A69F] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search conversations..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#171817] border border-[#30332E] text-xs text-[#F1F0E9] placeholder-[#A4A69F]/50 focus:outline-none focus:border-[#C9FF32]"
-              />
+            {/* Search and Filters Bar */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Search Bar */}
+              <div className="relative flex-1 sm:w-64 min-w-[200px]">
+                <Search className="w-4 h-4 text-[#A4A69F] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search conversations..."
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#171817] border border-[#30332E] text-xs text-[#F1F0E9] placeholder-[#A4A69F]/50 focus:outline-none focus:border-[#C9FF32]"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A4A69F] hover:text-[#F1F0E9]"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Date Filter Dropdown */}
+              <div className="relative flex items-center">
+                <Calendar className="w-3.5 h-3.5 text-[#A4A69F] absolute left-3 pointer-events-none" />
+                <select
+                  value={dateSort}
+                  onChange={(e) => setDateSort(e.target.value as "newest" | "oldest")}
+                  className="pl-8 pr-7 py-2 rounded-xl bg-[#171817] border border-[#30332E] text-xs text-[#F1F0E9] focus:outline-none focus:border-[#C9FF32] cursor-pointer appearance-none"
+                  title="Sort by date"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                </select>
+              </div>
+
+              {/* Sentiment Filter Dropdown */}
+              <div className="relative flex items-center">
+                <Filter className="w-3.5 h-3.5 text-[#A4A69F] absolute left-3 pointer-events-none" />
+                <select
+                  value={sentimentFilter}
+                  onChange={(e) =>
+                    setSentimentFilter(
+                      e.target.value as
+                        | "all"
+                        | "collaborative"
+                        | "constructive"
+                        | "tense"
+                        | "defensive"
+                    )
+                  }
+                  className="pl-8 pr-7 py-2 rounded-xl bg-[#171817] border border-[#30332E] text-xs text-[#F1F0E9] focus:outline-none focus:border-[#C9FF32] cursor-pointer appearance-none"
+                  title="Filter by sentiment"
+                >
+                  <option value="all">All Sentiments</option>
+                  <option value="collaborative">Collaborative</option>
+                  <option value="constructive">Constructive</option>
+                  <option value="tense">Tense</option>
+                  <option value="defensive">Defensive</option>
+                </select>
+              </div>
+
+              {/* Reset Filter Button if active */}
+              {(searchQuery || sentimentFilter !== "all" || dateSort !== "newest") && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSentimentFilter("all");
+                    setDateSort("newest");
+                  }}
+                  className="text-xs text-[#C9FF32] hover:underline px-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  Reset
+                </button>
+              )}
             </div>
           </div>
 
@@ -387,10 +493,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           {/* Empty Search State */}
           {!isLoading && reports.length > 0 && filteredReports.length === 0 && (
             <EmptyState
-              title="No reports match your query"
-              description={`We couldn't find any conversation analyses containing "${searchQuery}".`}
-              actionLabel="Clear Filter"
-              onAction={() => setSearchQuery("")}
+              title="No reports match your filters"
+              description={
+                searchQuery
+                  ? `We couldn't find any conversation analyses matching "${searchQuery}".`
+                  : `We couldn't find any analyses matching the selected sentiment filter.`
+              }
+              actionLabel="Reset Filters"
+              onAction={() => {
+                setSearchQuery("");
+                setSentimentFilter("all");
+                setDateSort("newest");
+              }}
             />
           )}
 

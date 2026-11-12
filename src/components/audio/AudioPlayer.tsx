@@ -6,6 +6,7 @@ import { formatTime } from "../../lib/utils";
 interface AudioPlayerProps {
   durationSeconds?: number;
   audioUrl?: string;
+  currentTime?: number;
   onTimeUpdate?: (currentTime: number) => void;
   className?: string;
 }
@@ -13,14 +14,21 @@ interface AudioPlayerProps {
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   durationSeconds = 240,
   audioUrl,
+  currentTime: externalCurrentTime,
   onTimeUpdate,
   className = "",
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(externalCurrentTime || 0);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [isMuted, setIsMuted] = useState(false);
   const intervalRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (externalCurrentTime !== undefined && Math.abs(externalCurrentTime - currentTime) > 0.4) {
+      setCurrentTime(externalCurrentTime);
+    }
+  }, [externalCurrentTime]);
 
   const totalDuration = durationSeconds > 0 ? durationSeconds : 240;
 

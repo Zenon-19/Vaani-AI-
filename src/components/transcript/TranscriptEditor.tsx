@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { Plus, Download, ArrowLeft, ArrowRight, Save, Sparkles, Check } from "lucide-react";
+import { Plus, Download, ArrowLeft, ArrowRight, Save, Sparkles, Check, Activity, ChevronDown, ChevronUp } from "lucide-react";
 import { TranscriptSegment as TranscriptSegmentType } from "../../types";
 import { TranscriptSegment } from "./TranscriptSegment";
 import { TranscriptSearch } from "./TranscriptSearch";
 import { TranscriptQualityNotice } from "./TranscriptQualityNotice";
 import { AudioPlayer } from "../audio/AudioPlayer";
+import { VoicePitchIntensityVisualizer } from "../audio/VoicePitchIntensityVisualizer";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { useToast } from "../ui/Toast";
@@ -36,6 +37,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(title);
+  const [showAcousticVisualizer, setShowAcousticVisualizer] = useState(true);
   const { toast } = useToast();
 
   // Find active segment based on audio time
@@ -130,6 +132,13 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     setCurrentTime(seconds);
   };
 
+  const handleSelectSegment = (segmentId: string) => {
+    const el = document.getElementById(`segment-${segmentId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   const handleSaveTitle = () => {
     if (titleDraft.trim()) {
       onUpdateTitle(titleDraft.trim());
@@ -210,6 +219,47 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
       <TranscriptQualityNotice />
 
+      {/* Voice Pitch & Emotional Intensity Trajectory Component */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#A4A69F]">
+              Acoustic Emotional Trajectory
+            </span>
+            <span className="text-[11px] text-[#F5AFCF] font-medium">
+              Voice Waveform & Pitch (F0)
+            </span>
+          </div>
+
+          <button
+            onClick={() => setShowAcousticVisualizer(!showAcousticVisualizer)}
+            className="flex items-center gap-1 text-xs text-[#A4A69F] hover:text-[#C9FF32] transition-colors cursor-pointer"
+          >
+            {showAcousticVisualizer ? (
+              <>
+                <span>Hide Voice Analysis</span>
+                <ChevronUp className="w-3.5 h-3.5" />
+              </>
+            ) : (
+              <>
+                <span>Show Voice Pitch & Waveform</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </>
+            )}
+          </button>
+        </div>
+
+        {showAcousticVisualizer && (
+          <VoicePitchIntensityVisualizer
+            segments={segments}
+            durationSeconds={durationSeconds}
+            currentTime={currentTime}
+            onSeek={(time) => setCurrentTime(time)}
+            onSelectSegment={handleSelectSegment}
+          />
+        )}
+      </div>
+
       {/* Main 65% / 35% Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: 65% Transcript Editor */}
@@ -264,6 +314,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             <AudioPlayer
               durationSeconds={durationSeconds}
               audioUrl={audioUrl}
+              currentTime={currentTime}
               onTimeUpdate={(time) => setCurrentTime(time)}
             />
           </div>
